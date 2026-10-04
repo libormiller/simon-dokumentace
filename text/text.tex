@@ -1,0 +1,643 @@
+% Do not forget to include Introduction
+%---------------------------------------------------------------
+% \chapter{Introduction}
+% uncomment the following line to create an unnumbered chapter
+\chapter*{Úvod}\addcontentsline{toc}{chapter}{Úvod}\markboth{Úvod}{Úvod} % \markboth is used due to page footer
+%---------------------------------------------------------------
+\setcounter{page}{1}
+
+% CS HELP ===================================================== % 
+% Úvod obsahuje, čím se práce zabývá, jaký problém je v práci řešen a jeho jasnou definici. Dále je zde uvedeno, proč je dané téma řešeno (tj. důvod vzniku zadání) a nastíněn postup řešení. Tato část obsahuje shrnutí současných možných zjištěných řešení jiných autorů. Může také obsahovat popis myšlenek, které byly aplikovány jinými autory při řešení stejného nebo podobného problému. Jsou zde také hojně uvedeny komentované bibliografické citace informačních zdrojů, ze kterých bylo při rešerši čerpáno.
+%
+% Úvod rozhodně nepředstavuje nepodstatnou část kvalifikační práce, do které autor uvede zcela bezvýznamný text s cílem zaplnění této části tak, aby nezůstala zcela prázdná. Úvod také neslouží k laickému popisu problematiky řešené v kvalifikační práci, protože tato je odbornou prací, kde jsou předpokládány určité odborné znalosti čtenáře. V úvodu by měl být diskutovány následující body.
+%% - Zdůvodnění aktuálnosti tématu a nastínění problému, který student bude řešit.
+%% - Stanovení cíle (cílů) práce.
+%% - Vytvoření hlavních otázek, na které chce práce najít odpověď.
+%% - Nastínění použitých metod a struktury práce.
+%
+% Úvod práce typicky neobsahuje číslované sekce, speciální prostředí, vzorce, apod.
+% ============================================================= % 
+
+
+V roce 2025 bylo k síti připojeno 21.1 biliónu IoT zařízení a každým rokem toto číslo roste
+o 10 až 15\%. Podle zprávy bezpečnostní agentury Palo Alto z roku 2022 až 57\% těchto zařízení nemá žádnou, nebo nedostačující formu
+zabezpečení. Tato zařízení jsou tak pro útočníky jednoduchou vstupenkou do síťě. Krom obav z ransomwareu je na místě také
+strach z intercepce datových zpráv, protože většina jich není nijak zašifrovaná a putují skrz síť pouze jako enkodovaný text.
+
+Tato práce se zabývá jedním z cenově a energeticky nenáročných řešení. Tím je hardwareová implementace LWC v podobě externího crypto-chipu, konkrétně šifry SIMON v konfiguraci
+s 64 bitovým klíčem a 32 bitovým blokem dat. Tato konfigurace je kompromis mezi úrovní zabezpečení a počtem logických bran ze kterých se skládá.
+Oproti běžně používaným standardům jako je AES128, nebo SHA256, je realizace této šifry prostorově i energreticky mnohem úspornější a je tak vhodná
+i pro kooperacei s 8 a 16 bitovými kontrolery s extrémně nízkou spotřebou. Tato konkrétní implementace používá pro komunikaci s MCU standardní sběrnici SPI.
+
+%---------------------------------------------------------------
+\chapter{Postup práce a využité nástroje}\label{chap:main}
+%---------------------------------------------------------------
+Většina nástrojů které byli k realizaci projektu použity jsou open-source, jedinou výjimkou je IDE Intel Quartus, které bylo použito pro práci s FPGA. Využitím opensource nástrojů v kombinaci s projektem Tiny Tapeout bylo možné snížit výrobní cenu prototypu integrovaného obvodu z několika desítek až stovek tisíc USD na 550 USD.
+Tato radikální redukce ceny vyplívá zejména z vyhnutí se programům s komerční licencí. Další faktor pro redukci ceny byl výběr vhodné výrobní technologie, nejedná se o zařízení, které by potřebovalo nejmodernější výrobní procesy, pro výrobu tedy dostačují 130 nm technologie IHPSG13G2 na které byl založený první prototyp a SKY130A na které byl založený druhý prototyp. Důvodem pro změnu technologií, byl rozdíl datumů, kdy se uzavírala výrobní okna.
+Vzhledem k tomu, že první prototyp obsahuje jen digitální část, která zůstala stejná i pro druhý, bude se pojednávat jen o druhém prototypu a technologii SKY130A. Narozdíl od výroby standardních několikavrstvých PCB, které se dají dnes nechat vyrobit za poměrně nízké ceny s lhůtou dodání v rámci dní až týdnů, je výroba prototypů integrovaných obvodů mnohem nákladnější a zdlouhavější. 
+Výroba integrovaného obvodu s sebou obnáší obrovské jednorázové fixní náklady, zejména kvůli výrobě fotolitografických masek, které se pro každý nový design mění, tyto masky se pak dají použít k výrobě velkých sérií, kde se náklady na kus rozloží, u prototypů však nedává smysl vyrábět velké série a ony jednorázové náklady se musí rozložit jen na pár desítek až stovek kusů. Kvůli komplexním dodavatelským řetězcům a aktuálnímu přetížení většiny výrobců polovodičů výrobní lhůty trvají několik měsíců, během kterých mohou nastat mnohá neplánovaná zpoždění. Z toho důvodu je nutné klást důraz na simulace a prototyp se nechává vyrábět, až v okamžik, kdy je design kompletně verifikován a existuje vysoká pravděpodobnost toho, že bude fungovat. 
+
+\section{Proces výroby integrovaného obvodu}
+Jak bylo nastíněno výše, výroba prototypů integrovaného obvodu je komplexní, zdlouhavý a drahý proces. Z cenových důvodů bylo možné návrh na reálný silikon implementovat jen jediným aktuálně (2026) dostupným způsobem, a to skrze Tiny Tapeout. 
+Princip Tiny Tapeout je jednoduchý, zkompiluje přibližně 500 projektů a umístí je do jediného integrovaného obvodu. Pomocí páteřního multiplexoru se vybírá který projekt je aktivní a propojený s definovanými pady pouzdra, každý projekt je power gated a je napájen jen tehdy, když je aktivně vybrán. Aby se design mohl stát součástí sdíleného výrobního cyklu, musí splňovat pravidla a projít několika testy, tím se zabrání tomu, aby jeden nekorektní projekt zničil celý ASIC. 
+Tiny Tapeout, však také neodesílá finální ASIC přímo do polovodičové továrny, ale do projektů sdíleného waferu, v závislosti na výrobní technologii se mění to který MWP se využije, znamená to tedy že projekt odeslaný do TT je na sdíleném chipu který se vyrobí na sdíleném waferu, ze kterého se vyrobí cca 60 různých integrovaných obvodů. Díky téhle struktuře je možné dosáhnout nízké ceny a pro malé projekty je velikost použitelného prostoru na chipu dostačující.
+
+% CS HELP ===================================================== % 
+% V~následujícím textu je popsána metodika zpracování VŠKP. Hlavní text je vhodné rozčlenit následujícím způsobem.
+%
+% Teoretická (metodologická) část
+% Obsahuje dosavadní poznatky k~danému problému, definici pojmů, formulaci hypotéz, výběr použitých metod a~důvody pro jejich použití, součástí teoretické části bývá i~rozbor možných variant řešení.
+%
+%
+% Kvalifikační práce
+% Bakalářskou prací student prokazuje, že je schopen řešit a~ústně i~písemně prezentovat zadaný problém a~obhájit své vlastní přístupy k~řešení. Obsah bakalářské práce odpovídá charakteru daného studijního oboru. Obsahem bakalářské práce mohou zpravidla být:
+% - odborná zpráva na základě rešerše, vycházející z~teoretických poznatků získaných studiem odborné literatury, ve které student přehledně shrnuje již známé skutečnosti, hodnotí je a~vyvozuje vlastní závěry v~dané problematice,
+% - odborná zpráva, vycházející z~vlastních nebo převzatých experimentálních výsledků, která obsahuje zpracování získaných dat vhodnými metodami a~vyvození závěrů,
+% - výpočet a~návrh jednoduššího technického zařízení nebo jeho části, zpracovaný na základě poznatků získaných v~průběhu studia a~studiem literatury, dokumentovaný postupem a~popisem výpočtu, vypracováním technické dokumentace zařízení, popř. i~zhotovením jeho funkčního vzorku,
+% - odborná zpráva, obsahující technickoekonomický rozbor několika variant řešení téhož problému.
+%
+% Diplomovou prací student prokazuje, že je schopen řešit a~ústně i~písemně prezentovat zadaný problém a~obhájit své vlastní přístupy k~řešení.  Předpokládá se uplatnění invence studenta, prezentace jeho vlastního pohledu na řešenou problematiku. Obsah diplomové práce odpovídá charakteru daného studijního oboru. Diplomová práce se liší od bakalářské práce zejména charakterem zadaných problémů, rozsahem a~hloubkou jejich zpracování a~přínosem vlastních poznatků. Obsahem diplomové práce mohou zpravidla být:
+% - odborná zpráva, vycházející z~vlastních experimentálních výsledků, která obsahuje zpracování získaných dat vhodnými metodami a~vyvození závěrů,
+% - výpočet a~návrh složitějšího technického zařízení nebo jeho části, zpracovaný na základě poznatků získaných v~průběhu studia a~studiem literatury, dokumentovaný postupem a~popisem výpočtu, vypracováním technické dokumentace zařízení, popř. i~zhotovením jeho funkčního vzorku,
+% - odborná zpráva, obsahující technickoekonomický rozbor několika variant řešení téhož přiměřeně náročného problému.
+%
+% Kvalifikační práce je vizitkou autora, proto vedle náležité obsahové úrovně by měla mít i~odpovídající formální strukturu a~úpravu. Rozsah kvalifikační práce je specifikován v~zadání, doporučený rozsah hlavní textové části bakalářské práce je obvykle 30 až 40 normostran, doporučený rozsah hlavní textové části diplomové práce je 40 až 60 normostran, kde jedna normostrana odpovídá textu o~délce 1800 znaků.
+%
+% Při psaní kvalifikační práce je nutno dbát na srozumitelnost textu a~logickou návaznost jednotlivých kapitol. Zcela zásadní je zřetelné oddělení výsledků vlastní práce od výsledků převzatých od jiných autorů. Veškerou použitou literaturu je nutno důsledně citovat podle ČSN ISO 690 Bibliografické odkazy a~citace dokumentů. Nezbytné je dodržení gramatických pravidel.
+%
+% V~souladu s~etickou normou je zakázáno opisování nebo kopírování souvislých pasáží z~publikací jiných autorů bez uvedení (citace) zdroje. Takové jednání je posuzováno jako neoprávněné přivlastňování si cizích myšlenek a~může vést k~hodnocení známkou „nevyhověl“, v~závažnějších případech i~ke kárnému řízení. (Všechny kvalifikační práce jsou po odevzdání testovány na plagiátorství v~systému Theses.cz).
+%
+% Pro zpracování kvalifikační práce platí doporučení normy ČSN 01 6910 Úprava dokumentů zpracovaných textovými procesory.
+%
+% Autor a~vedoucí práce si primárně stanoví pravidla vzájemné komunikace a~způsobu konzultací (termíny, frekvence, forma), které jsou pro studenta závazné.
+%
+%
+% Praktická (tvůrčí) část
+% Obsahuje řešení problému, experimenty, výpočty, diskusi a~vyhodnocení přínosu práce. Představuje tvůrčí část práce.
+%
+% Ve vlastních kapitolách práce autor popisuje detailní rozbor stavu problému, navrhuje a~definuje postup řešení/použité metody řešení, popisuje vlastní řešení a~jeho verifikaci (ověření věrohodnosti výsledků), popisuje praktickou realizaci experimentů/měření/ oživování zařízení atd.
+%
+% Popis experimentálních metod/měření musí být proveden tak, aby bylo možné experiment opakovat. Musí být zdůvodněno použití zvolených metod. Zvolené metody musí umožňovat vhodnou interpretaci dat (nesmí zkreslovat výsledky). Autor také nesmí opomenout uvést popis statistického zpracování výsledků případných použitých měřicích metod.
+%
+% Výsledky měření/výpočtů by měly být nejdříve jasně uvedeny a~následně je možné provést jejich diskusi, vyhodnocení a~interpretaci.
+%
+% V~kvalifikační práci je doporučeno popsat všechna řešení, a~to i~ta, která nevedla k~cíli a~napomohla např. k~jeho nalezení, případně vyloučila některé nevhodné způsoby řešení.
+%
+% Jednotlivé kapitoly by měly být vhodně logicky rozčleněny a~každá by měla začínat na nové stránce. Názvy kapitol, oddílů a~pododdílů se nesmí v~celé práci měnit.
+% ============================================================= % 
+
+
+%---------------------------------------------------------------
+\chapter{Struktura a použití šablony}\label{chap:struct}
+%---------------------------------------------------------------
+
+Šablona pro tvorbu závěrečné práce na FEL ZČU ve formátu \LaTeX{} má následující strukturu:
+
+\dirtree{%
+    .1 ~.
+    .1 img\DTcomment{adresář s obrázky}.
+    .1 text\DTcomment{adresář se zdrojovými texty}.
+    .2 appendix.tex\DTcomment{přílohy práce ve formátu \LaTeX{}}.
+    .2 assignment-include.pdf\DTcomment{zadání práce}.
+    .2 medium.tex\DTcomment{obsah přiloženého média ve formátu \LaTeX{}}.
+    .2 text.tex\DTcomment{text práce ve formátu \LaTeX{}}.
+    .2 bib-database.bib\DTcomment{bibliografická databáze ve formátu BibTeX}.
+    .1 fee-thesis.cls\DTcomment{šablona \LaTeX{}u}.
+    .1 fee-thesis.tex\DTcomment{hlavní zdrojový soubor práce ve formátu \LaTeX{}}.
+    .1 LICENSE\DTcomment{licence šablony}.
+    .1 README.md\DTcomment{popis projektu a základní nápověda}.
+}
+
+\bigskip
+
+\begin{note}
+  Kódování zdrojových souborů \LaTeX{}u je \texttt{UTF-8}.
+\end{note}
+
+\begin{note}
+Typ práce zvolíte změnou deklarace v hlavičce dokumentu \texttt{fee-thesis.tex}: zvolte bakalářskou nebo diplomovou práci.
+\end{note}
+
+\bigskip
+
+Ve většině případů v souboru \texttt{fee-thesis.tex} pouze vyplníte základní údaje o práci jako je název práce, jméno autora a vedoucího, název katedry obhajoby, abstrakt a seznam klíčových slov a seznamy symbolů a zkratek.
+
+Vlastní text práce pak tvoříte v samostatných souborech v adresáři \texttt{text}. V souboru \texttt{text/text.tex} se nachází hlavní část textu práce, soubor \texttt{text/appendix.tex} obsahuje přílohy a soubor \texttt{text/medium.tex} je určen pro popis obsahu elektronické přílohy práce.
+
+Soubor \texttt{text/bib-database.bib} obsahuje databázi citací ve formátu BibTeX -- do databáze vložte záznamy pro materiály, které budete v práci citovat.
+
+Soubor \texttt{assignment-include.pdf} nahraďte naskenovaným zadáním práce.
+
+\bigskip
+
+\begin{note}
+  v souboru \texttt{fee-thesis.tex} můžete odstranit blok \texttt{acknowledgmentpage}, nechcete-li do práce zahrnout poděkování.
+\end{note}
+
+%---------------------------------------------------------------
+\chapter{Práce se šablonou}
+%---------------------------------------------------------------
+
+Tato šablona definuje základní styly dokumentu dle pokynů pro vypracování závěrečných prací na FEL ZČU.
+
+Níže jsou uvedeny příklady použití direktiv \LaTeX{}u v souladu s aktuálními pokyny pro vypracování závěrečných prací na FEL. 
+
+% CS HELP ===================================================== % 
+% Formátování textu
+% Stanovuje základní pravidla pro samotný text a jeho grafickou úpravu v celé práci, kdy cílem je dosáhnout jednotného stylu formátování, tak aby práce byla graficky přehledná a kompaktní. V obsahu se projeví pouze první tři úrovně nadpisů, tedy je vhodné používat pouze Nadpis 1 – 3. Pro stať práce je doporučen styl „Normální“. 
+%% - Práce jsou psány pro formát A4, řádkování 1,5.
+%% - Odsazení levého okraje stránky 3 cm.
+%% - Odsazení zbylých okrajů stránky 2,5 cm.
+%% - Používá se jeden základní typ písma: Times New Roman.
+%% - Velikost písma 10 – názvy tabulek, grafů, obrázků a legendy či zdroje k nim, poznámky pod čarou
+%% - Velikost písma 12 – standardní text práce, nadpisy podkapitol
+%% - Velikost písma 16 – hlavní nadpisy
+%% - Text je možné zvýrazňovat kurzívou, tučným písmem či podtržením (pokud je zdůrazňován víceslovný výraz, podtrhává se nepřetržitě).
+%% - Text se zarovnává do bloku, nadpisy vlevo.
+%% - Číslování textu práce začíná od první strany úvodu a končí poslední stránkou závěru.
+%% - Záhlaví obsahuje název práce, jméno autora, rok zpracování.
+%% - Zápatí obsahuje čísla stránek.
+%
+% Členění textu
+% Kapitoly začínají na novém listu papíru. Nadpisy se uvádějí na samostatných řádcích a nepíše se za nimi tečka. Členění obsáhlejšího textu se provádí titulky a podtitulky, píší se malými písmeny kromě velkých začátečních písmen.
+% Na konci stránky nesmí zůstat nadpis kapitoly, samotná první řádka odstavce a slovo ukončené rozdělovacím znaménkem. % Na začátek stránky nesmí přetéci samostatný popisek obrázku, poslední řádka odstavce a část nadpisu.
+% ============================================================= %
+
+\section{Členění na kapitoly, sekce a podsekce}
+
+Základní členění textu práce je do kapitol, sekcí a podsekcí. Nová kapitola se nachází na začátku stránky, kapitoly úvod a závěr jsou nečíslované, ostatní kapitoly jsou číslované.
+
+\begin{note}
+Členění kapitol dále do sekcí, resp. sekcí do podsekcí má význam pouze tehdy jsou li sekce, resp. podsekce alespoň 2.
+\end{note}
+
+\begin{note}
+Nepoužívejte číslované sekce/podsekce v nečíslovaných kapitolách/sekcích.
+\end{note}
+
+\begin{lstlisting}[caption={Příklad členění textu na kapitoly, sekce a podsekce},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\chapter*{Nečíslovaná kapitola} % nadpis 1. úrovně
+
+\chapter{Číslovaná kapitola} % nadpis 1. úrovně
+  \section{Číslovaná sekce} % nadpis 2. úrovně
+    
+    \subsection{Číslovaná podsekce} % nadpis 3. úrovně
+      \subsubsection{Číslovaná podpodsekce} % nadpis 4. úrovně
+      
+    \subsection*{Nečíslovaná podsekce} % nadpis 3. úrovně
+  \section{Číslovaná sekce} % nadpis 2. úrovně
+\end{lstlisting}
+
+\clearpage
+
+\section{Zvýraznění textu}
+
+  Text je možné zvýrazňovat \textit{kurzívou}, \textbf{tučným písmem} či \underline{podtržením} (pokud je zdůrazňován víceslovný výraz, podtrhává se nepřetržitě).
+  
+  Pro výpis proměnných nebo jmen souborů lze využít \texttt{písmo s pevnou šířkou}.
+
+\begin{lstlisting}[caption={Příklad zvýraznění textu},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+    Text je možné zvýrazňovat \textit{kurzívou}, \textbf{tučným písmem} 
+    či \underline{podtržením} (pokud je zdůrazňován víceslovný výraz,
+    podtrhává se nepřetržitě).
+    
+    Pro výpis proměnných nebo jmen soubrů lze využít 
+    \texttt{písmo s pevnou šířkou}.
+\end{lstlisting}
+
+\section{Tok textu}
+
+Pro pokročilé úpravy v toku textu můžete použít standardní makra \LaTeX{}u:
+
+\begin{itemize}
+  \item pro vložení horizontální mezery různé šířky využijte: \texttt{\textbackslash bigskip}, \texttt{\textbackslash medskip} nebo \texttt{\textbackslash smallskip}
+  \item zrušení obsazení odstavce provedete pomocí makra \texttt{\textbackslash noindent}
+  \item vynucené zalomení stránky provedete pomocí makra \texttt{\textbackslash clearpage}
+  \item nezalomitelnou mezeru vložíte pomocí znaku \texttt{$\sim$}
+\end{itemize}
+
+\clearpage
+
+% CS HELP ===================================================== % 
+% Odrážky a číslované seznamy
+% Při psaní textu je někdy vhodné také využívat odrážek (příp. víceúrovňových odrážek) a číslované seznamy. V práci je nutné dodržovat vždy jeden typ odrážek (tj. obrazec, kterým začínají, i jejich odsazení).
+%% -  Odrážky standardně začínají pomlčkou, v případě víceúrovňových odrážek začínají i nižší úrovně pomlčkou (s větším odsazením zleva);
+%% (1) v případě číslovaných seznamů je číslování v arabských číslicích na konci opatřené kulatou závorkou nebo tečkou, v případě abecedních seznamů malými písmeny latinské abecedy opatřené na konci kulatou závorkou či tečkou;
+%% (2) platí stejné pravidlo o využívání jednoho stylu číslování a stejného odsazení od levého okraje v celém textu.
+%
+% Text každé odrážky nebo číselného seznamu většinou začíná malým písmenem (zejména pokud následuje jako výčet za dvojtečkou). Mezi odrážkami nebo číselnými seznamy se na konci odrážky, resp. číselného seznamu dělá středník. Poslední odrážka nebo řádek číselného seznamu se ukončí tečkou.
+% ============================================================= % 
+
+\section{Odrážkový seznam}
+
+\begin{itemize}
+  \item 1. úroveň odrážkového seznamu
+  \begin{itemize}
+    \item 2.  úroveň odrážkového seznamu
+    \begin{itemize}
+      \item 3.  úroveň odrážkového seznamu
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+
+\begin{lstlisting}[caption={Příklad vložení odrážkového seznamu},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{itemize}
+  \item 1. úroveň odrážkového seznamu
+  \begin{itemize}
+    \item 2.  úroveň odrážkového seznamu
+    \begin{itemize}
+      \item 3.  úroveň odrážkového seznamu
+    \end{itemize}
+  \end{itemize}
+\end{itemize}
+\end{lstlisting}
+
+\section{Číslovaný seznam}
+
+\begin{enumerate}
+  \item 1. úroveň číslovaného seznamu
+  \begin{enumerate}
+    \item 2.  úroveň číslovaného seznamu
+    \begin{enumerate}
+      \item 3.  úroveň číslovaného seznamu
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+
+\begin{lstlisting}[caption={Příklad vložení číslovaného seznamu},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{enumerate}
+  \item 1. úroveň číslovaneho seznamu
+  \begin{enumerate}
+    \item 2.  úroveň číslovaneho seznamu
+    \begin{enumerate}
+      \item 3.  úroveň číslovaneho seznamu
+    \end{enumerate}
+  \end{enumerate}
+\end{enumerate}
+\end{lstlisting}
+
+\clearpage
+
+% CS HELP ===================================================== % 
+% Poznámky pod čarou 
+% Uvádí se vždy na konci příslušné stránky a od předchozího textu se oddělí vodorovnou čarou v délce cca jedné třetiny řádku. Poznámky se číslují průběžně od začátku do konce práce. Poznámku je možné umístit buď hned ke slovu/sousloví, kterého se týká, nebo až na konec věty.
+% Do poznámky pod čarou se uvádí text, který danou problematiku rozšiřuje. Většinou se tedy uvádějí „věci navíc“, které s hlavní myšlenkou odstavce přímo, anebo nepřímo souvisí, ale není vhodné je zařadit do hlavního textu. Je možné zde uvést odkaz na jinou kapitolu, která se tématu blíže věnuje, může se uvést i odkaz na další zdroje. Poznámka pod čarou je běžná věta – začíná velkým písmenem a končí tečkou.
+% ============================================================= % 
+
+\section{Poznámka pod čarou}
+
+Poznámku pod čarou vložíte jednoduše\footnote{Využijte makro \texttt{\textbackslash footnote}.}
+
+\begin{lstlisting}[caption={Příklad vložení poznámky pod čarou},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+Poznámku pod čarou vložíte 
+jednoduše\footnote{Využijte makro \texttt{\textbackslash footnote}.}
+\end{lstlisting}
+
+% CS HELP ===================================================== % 
+% Označení tabulek, grafů a obrázků
+% Všechny druhy tabulek a grafů je nutné označit jako Tabulka, Graf, v případě obrázků jako Obr.. Tabulky, grafy a obrázky číslujeme a označujeme názvem. Název začíná velkým písmem a nepíše se za ním tečka. Název tabulky se umisťuje nad tabulkou, název obrázku, grafu pod zmíněný obrázek nebo graf. Popisný text tabulky musí být otištěn nad tabulkou za arabskou číslicí tabulky (podle ISO 7144, ostatní normy neuvádějí). Tabulky se uvádějí v příloze, pokud ovšem nejsou přímo součástí textu. 
+% ============================================================= % 
+
+\section{Tabulky}
+
+\begin{table}[ht!]\centering
+\caption[Příklad tabulky]{Obarvená tabulka}\label{tab:matematika}
+\begin{tabular}{|l|l|c|c|}
+    \hline
+    \rowcolor{headbackgroundgray}
+    Typ		& Prostředí		& \LaTeX{}ovská zkratka	& \TeX{}ovská zkratka \\
+    \hline
+    Text		& \verb|math|		& \verb|\(...\)|	& \verb|$...$| \\
+    \hline
+    Displayed	& \verb|displaymath|	& \verb|\[...\]|	& \cellcolor{red} \verb|$$...$$| \\
+    \hline
+\end{tabular}
+\end{table}
+
+\begin{lstlisting}[caption={Příklad vložení tabulky},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{table}[ht!]\centering
+\caption[Příklad tabulky]{Obarvená tabulka}\label{tab:matematika}
+\begin{tabular}{|l|l|c|c|}
+    \hline
+    \rowcolor{headbackgroundgray}
+    Typ  & Prostředí  & \LaTeX{}ovská zkratka & \TeX{}ovská zkratka \\
+    \hline
+    Text  & \verb|math|  & \verb|\(...\)| & \verb|$...$| \\
+    \hline
+    Displayed  & \verb|displaymath| & \verb|\[...\]| &
+                                      \cellcolor{red} \verb|$$...$$| \\
+    \hline
+\end{tabular}
+\end{table}
+\end{lstlisting}
+
+\clearpage
+\section{Obrázky}
+
+Všechny grafické výstupy/objekty vložené do příloh musí být v maximální možné grafické kvalitě, tzn. je vhodné používat výhradně vektorové formáty (*.eps, *.ps, *.hpgl, *.svg, *.wmf, *.emf  atd.) pro export z návrhových systémů pro desky plošných spojů, Matlabu atd., rastrové formáty (*.jpg, *.bmp, *.gif, *.tif  atd.) jsou pro tyto účely nevhodné. 
+
+Jednoduchá schémata a grafy lze vytvářet také přímo v \LaTeX{}u v prostředí \texttt{tikzpicture} nebo v jazyce \texttt{Graphviz}.
+
+\begin{figure}[ht!]
+\centering
+%\includegraphics[scale=0.4]{pic/index}
+\resizebox{\textwidth}{!}{
+\begin{tikzpicture}[level/.style={sibling distance=60mm/#1}]
+\node [circle,draw] (z){$n$}
+  child {node [circle,draw] (a) {$\frac{n}{2}$}
+    child {node [circle,draw] (b) {$\frac{n}{2^2}$}
+      child {node {$\vdots$}
+        child {node [circle,draw] (d) {$\frac{n}{2^k}$}}
+        child {node [circle,draw] (e) {$\frac{n}{2^k}$}}
+      } 
+      child {node {$\vdots$}}
+    }
+    child {node [circle,draw] (g) {$\frac{n}{2^2}$}
+      child {node {$\vdots$}}
+      child {node {$\vdots$}}
+    }
+  }
+  child {node [circle,draw] (j) {$\frac{n}{2}$}
+    child {node [circle,draw] (k) {$\frac{n}{2^2}$}
+      child {node {$\vdots$}}
+      child {node {$\vdots$}}
+    }
+  child {node [circle,draw] (l) {$\frac{n}{2^2}$}
+    child {node {$\vdots$}}
+    child {node (c){$\vdots$}
+      child {node [circle,draw] (o) {$\frac{n}{2^k}$}}
+      child {node [circle,draw] (p) {$\frac{n}{2^k}$}
+        child [grow=right] {node (q) {$=$} edge from parent[draw=none]
+          child [grow=right] {node (q) {$O_{k = \lg n}(n)$} edge from parent[draw=none]
+            child [grow=up] {node (r) {$\vdots$} edge from parent[draw=none]
+              child [grow=up] {node (s) {$O_2(n)$} edge from parent[draw=none]
+                child [grow=up] {node (t) {$O_1(n)$} edge from parent[draw=none]
+                  child [grow=up] {node (u) {$O_0(n)$} edge from parent[draw=none]}
+                }
+              }
+            }
+            child [grow=down] {node (v) {$O(n \cdot \lg n)$}edge from parent[draw=none]}
+          }
+        }
+      }
+    }
+  }
+};
+\path (a) -- (j) node [midway] {+};
+\path (b) -- (g) node [midway] {+};
+\path (k) -- (l) node [midway] {+};
+\path (k) -- (g) node [midway] {+};
+\path (d) -- (e) node [midway] {+};
+\path (o) -- (p) node [midway] {+};
+\path (o) -- (e) node (x) [midway] {$\cdots$}
+  child [grow=down] {
+    node (y) {$O\left(\displaystyle\sum_{i = 0}^k 2^i \cdot \frac{n}{2^i}\right)$}
+    edge from parent[draw=none]
+  };
+\path (q) -- (r) node [midway] {+};
+\path (s) -- (r) node [midway] {+};
+\path (s) -- (t) node [midway] {+};
+\path (s) -- (l) node [midway] {=};
+\path (t) -- (u) node [midway] {+};
+\path (z) -- (u) node [midway] {=};
+\path (j) -- (t) node [midway] {=};
+\path (y) -- (x) node [midway] {$\Downarrow$};
+\path (v) -- (y)
+  node (w) [midway] {$O\left(\displaystyle\sum_{i = 0}^k n\right) = O(k \cdot n)$};
+\path (q) -- (v) node [midway] {=};
+\path (e) -- (x) node [midway] {+};
+\path (o) -- (x) node [midway] {+};
+\path (y) -- (w) node [midway] {$=$};
+\path (v) -- (w) node [midway] {$\Leftrightarrow$};
+\path (r) -- (c) node [midway] {$\cdots$};
+\end{tikzpicture}}
+\caption{Příklad obrázku v prostředí \texttt{tikzpicture}}\label{img:img1}
+\end{figure}
+
+
+\begin{lstlisting}[caption={Příklad vložení obrázku},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{img/index.pdf}
+  \caption{Příklad vložení obrázku ve formátu PDF}\label{img:img1}
+\end{figure}
+\end{lstlisting}
+
+\clearpage
+
+\section{Odkazy}
+
+Odkazy v rámci dokumentu se provádí pomocí vložení páru maker \texttt{\textbackslash label} a \texttt{\textbackslash ref}.
+
+Odkazy se nejčastěji používají pro referenci na obrázek, tabulku, kapitolu nebo sekci. Ve výstupním PDF je při  použití této šablony automaticky vytvořen také hypertextový odkaz:
+
+Zkuste přejít na kapitolu \ref{chap:struct}.
+
+Podobně pro vložení URL využijte makro \texttt{\textbackslash url}: \url{http://fel.zcu.cz}.
+
+\begin{lstlisting}[caption={Příklad vložení odkazů},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\chapter{Struktura šablony}\label{chap:struct}
+...
+Zkuste přejít na 2. kapitolu \ref{chap:struct}.
+
+Podobně pro vložení URL využijte makro 
+\texttt{\textbackslash url}: \url{http://fel.zcu.cz}.
+\end{lstlisting}
+
+\begin{note}
+Pro vytvoření křížového odkazu musíte spustit překlad dokumentu dvakrát po sobě -- vytváření odkazů je dvouprůchodový proces, který nejprve vytvoří seznam referencí a poté vkládá odkazy na správná místa v dokumentu.
+\end{note}
+
+\section{Citace}
+Veškerou použitou literaturu je nutno důsledně citovat podle ČSN ISO 690 Bibliografické odkazy a~citace dokumentů. Nezbytné je dodržení gramatických pravidel.
+
+Citace vkládejte pomocí direktivy \texttt{\textbackslash cite} takto:
+
+\dots jak se uvádí v \cite{rabin1959finite}.
+
+\begin{lstlisting}[caption={Příklad vložení citace},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\dots jak se uvádí v \cite{rabin1959finite}.
+\end{lstlisting}
+
+\begin{note}
+Seznam citací je při překladu automaticky vložen na konec práce.
+
+Pro vytvoření seznamu citací musíte spustit překlad dokumentu, poté program \texttt{biber}, který vygeneruje citace z databáze a nakonec dokument znovu přeložit.
+\end{note}
+
+
+\begin{lstlisting}[caption={Příklad překladu pro vygenerování seznamu citací},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=bash]
+$ pdflatex fee-thesis.tex
+$ biber fee-thesis.bcf
+$ pdflatex fee-thesis.tex
+\end{lstlisting}
+
+\clearpage
+
+% CS HELP ===================================================== % 
+% Vzroce
+% Číslice se musí psát v souladu s normou ISO 31. Píší se do středu stránky. Je nutné je odkazovat v textu, tedy uvést je a okomentovat. 
+% ============================================================= % 
+
+\section{Matematické vzorce}
+
+Matematické vzorce se vkládají standardním \LaTeX{}ovým způsobem.
+
+\noindent Například vzorec umístěný do bloku:
+
+$$e = m \cdot c^{2},$$
+
+\noindent inline vzorec $ e = m \cdot c^{2}$ a čislovaný vzorec:
+
+\begin{equation}
+e = m \cdot c^{2},
+\end{equation}
+
+kde $e$ je energie, $m$ je hmotnost a $c$ je rychlost světla.
+
+\begin{lstlisting}[caption={Příklad vložení matemetických vzorců},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\noindent Například vzorec umístěný do bloku:
+
+$$e = m \cdot c^{2},$$
+
+\noindent inline vzorec $ e = m \cdot c^{2}$ a čislovaný vzorec:
+
+\begin{equation}
+e = m \cdot c^{2},
+\end{equation}
+kde $e$ je energie, $m$ je hmotnost a $c$ je rychlost světla.
+\end{lstlisting}
+
+\clearpage
+
+\section{Rozšířené formátování textu}
+
+Níže jsou uvedeny příklady použití direktiv \LaTeX{}u nedefinované v pokynech pro vypracování zavěrečných prací na FEL, které však mohou být v některých případech užitečné a s pokyny nejsou v rozporu. 
+
+\subsection{Prostředí pro výpis zdrojového kódu}
+
+\begin{lstlisting}[caption={Výpis zdrojového kódu v jazyce C},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=C]
+    #include<stdio.h>
+    #include<iostream>
+    // A comment
+    int main(void)
+    {
+        printf("Hello World\n");
+        return 0;
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Příklad vložení výpisu zdrojového kódu},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{lstlisting}[caption={Hello World},label=list:8-6,captionpos=t,
+float,abovecaptionskip=-\medskipamount,
+belowcaptionskip=\medskipamount,language=C]
+...
+\end{lstlisting}
+
+\subsection{Abstrakt kapitoly}
+
+Na začátku kapitoly můžete uvést abstrakt kapitoly a nebo motto. To se hodí zejména u delších prací, např. u disertací. K tomu můžete využít prostředí \texttt{chapterabstract}.
+
+\begin{lstlisting}[caption={Příklad vložení motta kapitoly},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{chapterabstract}
+    Dvakrát měř jednou řež!
+\end{chapterabstract}
+\end{lstlisting}
+
+\clearpage
+
+\subsection{Číslovaná prostředí pro zvýraznění bloku textu}
+
+Šablona navíc definuje několik číslovaných prostředí, které umožňují zvýraznit bloky textu.
+
+\begin{definition}[Optional label]
+\lipsum[1][1]
+\end{definition}
+
+\begin{example}
+\lipsum[1][2]
+\end{example}
+
+\begin{theorem}
+\lipsum[1][3]
+\end{theorem}
+
+\begin{proof}
+\lipsum[1][4]
+\end{proof}
+
+\begin{corollary}
+\lipsum[2][1]
+\end{corollary}
+
+\begin{proposition}
+\lipsum[2][2]
+\end{proposition}
+
+\begin{note}
+\lipsum[2][3]
+\end{note}
+
+\begin{remark}
+\lipsum[2][4]
+\end{remark}
+
+\begin{lemma}
+\lipsum[2][5]
+\end{lemma}
+
+\clearpage
+
+\begin{lstlisting}[caption={Příklad vložení speciálních číslovaných prostředí},label=list:8-6,captionpos=t,abovecaptionskip=-\medskipamount,belowcaptionskip=\medskipamount,language=TeX]
+\begin{definition}[Optional label]
+\lipsum[1][1]
+\end{definition}
+
+\begin{example}
+\lipsum[1][2]
+\end{example}
+
+\begin{theorem}
+\lipsum[1][3]
+\end{theorem}
+
+\begin{proof}
+\lipsum[1][4]
+\end{proof}
+
+\begin{corollary}
+\lipsum[2][1]
+\end{corollary}
+
+\begin{proposition}
+\lipsum[2][2]
+\end{proposition}
+
+\begin{note}
+\lipsum[2][3]
+\end{note}
+
+\begin{remark}
+\lipsum[2][4]
+\end{remark}
+
+\begin{lemma}
+\lipsum[2][5]
+\end{lemma}
+\end{lstlisting}
+
+% CS HELP ===================================================== % 
+% V~závěru musí být kladen důraz především na shrnutí výsledků práce a~vlastní přínos autora. V~závěru práce by rozhodně neměly být autorem utajeny/maskovány výsledky, které poukazují na např. některé nedostatky provedeného návrhu/technického řešení, případně určitá technická omezení, které se autorovi nepodařilo překonat.
+% 
+% Objektivní rozbor chyb/nedostatků návrhu/postupu řešení a~doporučení pro další vhodnější postup/realizaci není důvod ke špatnému hodnocení práce, a~naopak svědčí o~schopnosti autora objektivně analyzovat výsledky své práce včetně schopnosti nalézt optimální řešení.
+% 
+% V~závěru by také měla být provedena konfrontace zadání (tj. vytyčených cílů) a~dosažených výsledků při řešení kvalifikační práce, tzn. je zde uvedena míra splnění cílů definovaných v~zadání práce.
+% 
+% Je vhodné na tomto místě provést případnou diskusi věrohodnosti dílčích výsledků práce (důležitých měření, výpočtů, atd.) a~uvést možná doporučení pro další, autorem navrhovaný, postup, řešení, úpravy…, které nebylo možné např. z~časových důvodů zrealizovat a~jejichž cílem je např. dosažení lepších technických parametrů navrženého zařízení, zvýšení spolehlivosti/funkčnosti, snížení ceny, případně navržení vhodnějšího technického řešení, pokud se zvolený postup řešení ukázal jako méně vhodný atd. V~závěru je případně možno uvést uplatnění řešení v~praxi.
+% ============================================================= %
+%---------------------------------------------------------------
+\chapter*{Zhodnocení a závěr}\addcontentsline{toc}{chapter}{Zhodnocení a závěr}\markboth{Závěr}{Závěr}
+%---------------------------------------------------------------
+\lipsum[2]
+
+%---------------------------------------------------------------
