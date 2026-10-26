@@ -19,34 +19,75 @@
 % ============================================================= % 
 
 
-V roce 2025 bylo k síti připojeno 21.1 biliónu IoT zařízení a každým rokem toto číslo roste
-o 10 až 15\%. Podle zprávy bezpečnostní agentury Palo Alto \cite{Unit2020} z roku 2022 až 57\% těchto zařízení nemá žádnou, nebo nedostačující formu
-zabezpečení. Tato zařízení jsou tak pro útočníky jednoduchou vstupenkou do síťě. Krom obav z ransomwareu je na místě také
+V roce 2025 bylo k síti připojeno 21.1 biliónů IoT zařízení \cite{connected_devices} a každým rokem toto číslo roste
+o 10 až 15\%. Podle zprávy bezpečnostní agentury Palo Alto \cite{Unit2020} z roku 2020 až 57\% IoT zařízení nemá žádnou nebo nedostačující formu
+zabezpečení. Tato zařízení jsou tak pro útočníky jednoduchý vstupní bod do sítě. Krom obav z ransomwareu je na místě také
 strach z intercepce datových zpráv, protože většina jich není nijak zašifrovaná a putují skrz síť pouze jako enkodovaný text.
 
 Tato práce se zabývá jedním z cenově a energeticky nenáročných řešení. Tím je hardwareová implementace LWC v podobě externího crypto-chipu, konkrétně šifry SIMON v konfiguraci
-s 64 bitovým klíčem a 32 bitovým blokem dat. Tato konfigurace je kompromis mezi úrovní zabezpečení a počtem logických bran ze kterých se skládá.
-Oproti běžně používaným standardům jako je AES128, nebo SHA256, je realizace této šifry prostorově i energreticky mnohem úspornější \cite{Shors2015} a je tak vhodná
-i pro kooperacei s 8 a 16 bitovými kontrolery s extrémně nízkou spotřebou. Tato konkrétní implementace používá pro komunikaci s MCU standardní sběrnici SPI.
+s 64 bitovým klíčem a 32 bitovým blokem šifrovaných dat. Tato konfigurace je kompromis mezi úrovní zabezpečení a počtem logických bran ze kterých se skládá.
+Oproti běžně používaným standardům jako je AES128, je realizace této šifry prostorově i energreticky mnohem úspornější \cite{Diehl2017} a je tak vhodná
+i pro kooperacei s 8 a 16 bitovými kontrolery s extrémně nízkou spotřebou. Návrh, o kterém pojednává tato práce, má krom samotné šifry i sběrnici SPI a nastavitelný generátor interního hodinového signálu.
 
 %---------------------------------------------------------------
 \chapter{Workflow a využité nástroje}\label{chap:main}
 %---------------------------------------------------------------
-Většina nástrojů které byli k realizaci projektu použity jsou open-source, jedinou výjimkou je IDE Intel Quartus, které bylo použito pro práci s FPGA. Využitím opensource nástrojů v kombinaci s projektem Tiny Tapeout \cite{Venn2024} bylo možné snížit výrobní cenu prototypu integrovaného obvodu z několika desítek až stovek tisíc USD na 550 USD.
-Tato radikální redukce ceny vyplívá zejména z vyhnutí se programům s komerční licencí. Další faktor pro redukci ceny byl výběr vhodné výrobní technologie, nejedná se o zařízení, které by potřebovalo nejmodernější výrobní procesy,  pro výrobu tedy dostačují 130 nm technologie IHPSG13G2 na které byl založený první prototyp a SKY130A na které byl založený druhý prototyp. Důvodem pro změnu technologií, byl rozdíl datumů, kdy se uzavírala výrobní okna.
+Většina nástrojů, které byly k realizaci projektu použity, jsou open-source. Jedinou výjimkou je IDE Intel Quartus, které bylo použito pro práci s FPGA. Využitím opensource nástrojů v kombinaci s projektem Tiny Tapeout \cite{Venn2024} bylo možné snížit výrobní cenu prototypu integrovaného obvodu z několika desítek až stovek tisíc USD na 550 USD.
+Tato radikální redukce ceny vyplývá zejména z vyhnutí se programům s komerční licencí. Další faktor pro redukci ceny byl výběr vhodné výrobní technologie. Nejedná se o zařízení, které by potřebovalo nejmodernější výrobní procesy. Dostačují 130 nm technologie IHPSG13G2, na které byl založený první prototyp a SKY130A, na které byl založený druhý prototyp. Důvodem pro změnu technologií byl rozdíl datumů, kdy se uzavírala výrobní okna.
 Vzhledem k tomu, že první prototyp obsahuje jen digitální část, která zůstala stejná i pro druhý, bude se pojednávat jen o druhém prototypu a technologii SKY130A. Narozdíl od výroby standardních několikavrstvých PCB, které se dají dnes nechat vyrobit za poměrně nízké ceny s lhůtou dodání v rámci dní až týdnů, je výroba prototypů integrovaných obvodů mnohem nákladnější a zdlouhavější. 
-Výroba integrovaného obvodu s sebou obnáší obrovské jednorázové fixní náklady, zejména kvůli výrobě fotolitografických masek, které se pro každý nový design mění, tyto masky se pak dají použít k výrobě velkých sérií, kde se náklady na kus rozloží, u prototypů však nedává smysl vyrábět velké série a ony jednorázové náklady se musí rozložit jen na pár desítek až stovek kusů. Kvůli komplexním dodavatelským řetězcům a aktuálnímu přetížení většiny výrobců polovodičů výrobní lhůty trvají několik měsíců, během kterých mohou nastat mnohá neplánovaná zpoždění. Z toho důvodu je nutné klást důraz na simulace a prototyp se nechává vyrábět, až v okamžik, kdy je design kompletně verifikován a existuje vysoká pravděpodobnost toho, že bude fungovat. 
+Výroba integrovaného obvodu s sebou obnáší obrovské jednorázové fixní náklady, zejména kvůli výrobě fotolitografických masek, které se pro každý nový design mění. Tyto masky se pak dají použít k výrobě velkých sérií, kde se náklady na kus rozloží. U prototypů však nedává smysl vyrábět velké série a jednorázové náklady se musí rozložit jen na pár desítek až stovek kusů. Kvůli komplexním dodavatelským řetězcům a aktuálnímu přetížení většiny výrobců polovodičů výrobní lhůty trvají několik měsíců, během kterých mohou nastat mnohá neplánovaná zpoždění. Z toho důvodu je nutné klást důraz na simulace a prototyp se nechává vyrábět až v okamžiku, kdy je design kompletně verifikován a existuje vysoká pravděpodobnost toho, že bude fungovat. 
 
-\section{Proces výroby integrovaného obvodu}
+\section{Tiny Tapeout}
 Jak bylo nastíněno výše, výroba prototypů integrovaného obvodu je komplexní, zdlouhavý a drahý proces. Z cenových důvodů bylo možné návrh na reálný silikon implementovat jen jediným aktuálně (2026) dostupným způsobem, a to skrze Tiny Tapeout. 
-Princip Tiny Tapeout je jednoduchý, zkompiluje přibližně 500 projektů a umístí je do jediného integrovaného obvodu. Pomocí páteřního multiplexoru se vybírá který projekt je aktivní a propojený s definovanými pady pouzdra, každý projekt je power gated a je napájen jen tehdy, když je aktivně vybrán. Aby se design mohl stát součástí sdíleného výrobního cyklu, musí splňovat pravidla a projít několika testy, tím se zabrání tomu, aby jeden nekorektní projekt zničil celý ASIC. 
-Tiny Tapeout, však také neodesílá finální ASIC přímo do polovodičové továrny, ale do projektů sdíleného waferu, v závislosti na výrobní technologii se mění to který MWP se využije, znamená to tedy že projekt odeslaný do TT je na sdíleném chipu který se vyrobí na sdíleném waferu, ze kterého se vyrobí cca 60 různých integrovaných obvodů. Díky téhle struktuře je možné dosáhnout nízké ceny a pro malé projekty je velikost použitelného prostoru na chipu dostačující.
+Princip Tiny Tapeout je jednoduchý, zkompiluje přibližně 500 projektů a umístí je do jediného integrovaného obvodu. Pomocí páteřního multiplexoru se vybírá aktivní projekt,který je propojený s definovanými pady pouzdra. Každý projekt je power gated a je napájen jen tehdy, když je aktivně vybrán. Aby se design mohl stát součástí sdíleného výrobního cyklu, musí splňovat pravidla a projít několika testy. Tím se zabrání tomu, aby jeden nekorektní projekt znehodnotil celý ASIC. 
+Tiny Tapeout neodesílá finální ASIC přímo do polovodičové továrny, ale do MPW. V závislosti na výrobní technologii se mění využitý MPW. Znamená to tedy že projekt odeslaný do TT je na sdíleném chipu, který se vyrobí na sdíleném waferu, ze kterého se vyrobí minimálně 20 různých integrovaných obvodů \cite{Venn2024,chipfoundry_howitworks} . Díky této struktuře je možné dosáhnout nízké ceny a pro malé projekty je velikost použitelného prostoru na chipu dostačující.
+\section{Výrobní technologie SKY130A}
+SKY130A je jedna z mála technologií pro výrobu pokročilých integrovaných obvodů, která má opensource PDK. Z toho plyne několik zásadních výhod: žádné poplatky za využití technologie, nižší ceny výroby, žádné smlouvy o mlčenlivosti a také mnohé komunitní projekty, 
+díky kterým je možné technologii reálně využít \cite{skywater_sky130A}.\newline
+PDK obsahuje několik má částí, které umožňují návrh obvodů \cite{STG2020}.
+\begin{itemize}
+  \item DRC pravidla, pro návrh. Definují minimální velikosti vodičů, substrátů, a jiných vrstev.
+  \item Knihovna standardních součástek. V té jsou obsažené tranzistory, hradla, klopné obvody, multiplexory a další primitivní struktury.
+  \item SPICE modely pro veškeré standartní struktury.
+  \item Popisy fyzikálních vlastností materiálů.
+  \item Pravidla pro LVS. Ta umožňují porovnat schéma s layoutem.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[scale=0.25]{img/metal_stack.pdf}
+  \caption{Průřez vrstvami které je možné vytvořit procesem SKY130A \cite{skywater_metal_stack}.}\label{img:metal_stack}
+\end{figure}
+
+V tomto procesu je podkladový substrát typu P. V tomto substrátu je možné vytvářet struktury typu N a hloubkové N studny. Proces je optimalizován pro tvorbu unipolárních tranzistorů,
+ale umožňuje i bipolární tranzistory. Cesty se dají vést na 6 vrstvách kovu a Tiny Tapeout si nejvyšší vrstvu vyhrazuje pro rozvod napájení. Je možné vytvořit kondenzátory i rezistory.
 \section{Proces návrhu integrovaného obvodu}
-Proces návrhu se liší pro digitální a analogovou část. Ta digitální je založená na HDL verilogu, který je automaticky syntetizován do podoby logických hradel a tranzistorů. Zatímco u analogové části projektu bylo nutné 
-vytvořit ručně schéma i layout ze standardních komponent PDK, ale i úplně vlastních součástek, celý proces je znázorněn pracovním diagramem \ref{fig:design_diag}. To jaká je hustota součástek, designová pracidla, jak standardní součástky vypadájí a jaké vrstvy je možné využít udává zvolená technologie, v tomto případě SKY130A \cite{STG2020}.
-\begin{figure}[!ht]
+Jedna z nevýhod využívání opensource nástrojů je jejich roztříštěnost. Neexistuje tedy jeden centrální program, ve kterém by se dalo udělat vše od verilogu po layout a floorplanning. Je tedy nutné se zorientovat 
+v relativně velkém množství komplexních nástrojů vyvýjených malými týmy či jednotlivci. Souhrn a popis všech nástrojů v Tabulce \ref{tab:nastroje_ic_design}.
+\begin{table}[!ht]
+    \centering
+    \caption[Nástroje využívané pro návrh integrovaných obvodů]{Nástroje využívané pro návrh integrovaných obvodů}\label{tab:nastroje_ic_design}
+    \begin{tabular}{|l|l|}
+    \hline
+        \textbf{Nástroj} & \textbf{Popis} \\ \hline
+        Verilog & HDL sloužící k popisu logických obvodů. \\ \hline
+        Verilator & Logický simulátor pro verilog. \\ \hline
+        Intel Quartus & Vývojové prostředí pro FPGA Intel .\\ \hline
+        Librelane & Syntetizátor Verilog kódu do fyzického obvodového zapojení ve formátu GDS. \\ \hline
+        XSCHEM & Editor elektronických schémat. \\ \hline
+        NGSPICE & Simulátor SPICE. \\ \hline
+        Magic & Layout editor pro integrované obvody. \\ \hline
+        Netgen & Porovnává zapojení layoutu a schématu. \\ \hline
+        SKY130A PDK & Soubor nástrojů a výrobních pravidel pro proces SKY130A. \\ \hline
+    \end{tabular}
+\end{table}
+
+Proces návrhu se liší pro digitální a analogovou část. Digitální část je založená na HDL Verilogu, který je automaticky syntetizován do podoby logických hradel ze standardní knihovny. Zatímco u analogové části projektu bylo nutné 
+vytvořit ručně schéma i layout nejen ze standardních komponent PDK, ale i vlastních součástek. Celý proces je znázorněn pracovním diagramem na Obrázek \ref{fig:design_diag}.
+
+\begin{figure}[H]
 \centering
-\resizebox{0.7\textwidth}{!}{%
+\resizebox{0.6\textwidth}{!}{%
 \begin{circuitikz}
 \tikzstyle{every node}=[font=\fontsize{11.9pt}{15.5pt}\selectfont]
 \draw  (11.125,11.125) rectangle (14,12.5);
@@ -125,11 +166,11 @@ vytvořit ručně schéma i layout ze standardních komponent PDK, ale i úplně
 \caption{Diagram procesu návrhu a verifikace integrovaného obvodu.}
 \label{fig:design_diag}
 \end{figure}
-\subsection{SKY130A}
-\subsection{Analogový workflow}
-Základem vytváření analogových částí jsou programy XSCHEM, Magic, NGSPICE a Netgen. V XSCHEMu se vytvoří schéma a na základě definovaných parametrů součástek dokáže vygenerovat SPICE netlist celého schématu, díky čemuž je možné vytvořit podrobnou simulaci a ověřit funkci obvodu z ideálních součástek.
-Onen spice netlist se dá naexportovat do magicu, kde generátor vytvoří součástky, dle definovaných parametrů, je sice možné generátor nevyužít, ale znamenalo by to, že je nutné vytvořit každý tranzistor, rezistor i kondenzátor zvlášť. 
-Při vytváření layoutu je možné pro propojení
+
+\subsection{Analogové workflow}
+Základem vytváření analogových částí jsou programy XSCHEM, Magic, NGSPICE a Netgen. V XSCHEMu se vytvoří schéma a na základě definovaných parametrů součástek se vygeneruje SPICE netlist celého schématu. Díky čemuž je možné vytvořit podrobnou simulaci a ověřit funkci obvodu z ideálních součástek.
+SPICE netlist se dá naexportovat do Magicu, který slouží k vytvoření layoutu. Generátor vytvoří fyzické součástky dle definovaných parametrů. Je možné generátor nevyužít, ale znamenalo by to, že je nutné vytvořit každý tranzistor, rezistor i kondenzátor z elementárních materiálů jako je P substrát a N substrát.
+
 % CS HELP ===================================================== % 
 % V~následujícím textu je popsána metodika zpracování VŠKP. Hlavní text je vhodné rozčlenit následujícím způsobem.
 %
