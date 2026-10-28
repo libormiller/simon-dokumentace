@@ -1,0 +1,129 @@
+digraph ASIC_Digital_Flow {
+    // Základní nastavení grafu
+    rankdir=TB;             // Průřezově striktní vertikální tok
+    splines=true;           // Plynulé zakřivení
+    compound=true;
+    nodesep=0.8;            // Dostatečný odstup pro boční vedení
+    ranksep=0.45;           // Vertikální mezerování mezi bloky
+    
+    // Globální nastavení LaTeXového písma
+    fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif";
+
+    // Globální styl uzlů
+    node [
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif",
+        fontsize=10,
+        shape=box,
+        style="rounded,filled",
+        fillcolor="#FFFFFF",
+        color="#333333",
+        penwidth=1.2,
+        margin="0.25,0.12",
+        group=main          // Udržuje uzly v hlavní svislé ose
+    ];
+    
+    // Globální styl hran
+    edge [
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif",
+        fontsize=9,
+        color="#333333",
+        penwidth=1.0,
+        arrowsize=0.8
+    ];
+
+    // Počáteční a koncový stav
+    start [label="Nový blok", shape=ellipse, fillcolor="#F0F4F8", color="#104E8B", penwidth=1.5];
+    valid_block [label="Validní blok", shape=ellipse, fillcolor="#E8F5E9", color="#2E7D32", penwidth=1.5];
+
+    // --- VERILOG DESIGN ---
+    verilog_design [label="Verilog kód"];
+
+    // --- VERILATOR ---
+    subgraph cluster_verilator {
+        label="VERILATOR";
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif";
+        fontsize=10;
+        style="dashed";
+        color="#666666";
+        penwidth=1.2;
+        labeljust="l";
+        margin=14;
+        
+        verilator_sim [label="Simulace a validace\njednotlivých modulů"];
+    }
+
+    // --- COCOTB (RTL simulace) ---
+    subgraph cluster_cocotb1 {
+        label="COCOTB";
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif";
+        fontsize=10;
+        style="dashed";
+        color="#666666";
+        penwidth=1.2;
+        labeljust="l";
+        margin=14;
+        
+        cocotb_sim [label="Simulace vrcholového modulu\n(Python testbench)"];
+    }
+
+    // --- INTEL QUARTUS ---
+    subgraph cluster_fpga {
+        label="INTEL QUARTUS";
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif";
+        fontsize=10;
+        style="dashed";
+        color="#666666";
+        penwidth=1.2;
+        labeljust="l";
+        margin=14;
+        
+        fpga_val [label="Implementace a HW validace\nlogiky na FPGA"];
+    }
+
+    // --- LIBRERLANE ---
+    subgraph cluster_librelane {
+        label="LIBRERLANE";
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif";
+        fontsize=10;
+        style="dashed";
+        color="#666666";
+        penwidth=1.2;
+        labeljust="l";
+        margin=14;
+        
+        librelane_synth [label="ASIC syntéza na SKY130A"];
+        librelane_gds [label="Generování GDS a\ngate-level .v netlistu"];
+
+        librelane_synth -> librelane_gds;
+    }
+
+    // --- COCOTB (Gate-level simulace) ---
+    subgraph cluster_cocotb2 {
+        label="COCOTB";
+        fontname="Latin Modern Roman, CMU Serif, Times-Roman, serif";
+        fontsize=10;
+        style="dashed";
+        color="#666666";
+        penwidth=1.2;
+        labeljust="l";
+        margin=14;
+        
+        cocotb_gl_sim [label="Gate-level simulace\n(Python testbench)"];
+    }
+
+    // --- HLAVNÍ DOPŘEDNÝ TOK ---
+    start -> verilog_design;
+    verilog_design -> verilator_sim;
+    verilator_sim -> cocotb_sim;
+    cocotb_sim -> fpga_val;
+    fpga_val -> librelane_synth;
+    librelane_gds -> cocotb_gl_sim;
+    cocotb_gl_sim -> valid_block;
+
+    // --- ZPĚTNÉ VAZBY / ITERACE ---
+    // constraint=false drží uzly v jedné svislé lince
+    verilog_design -> verilator_sim [dir=back, constraint=false];
+    verilog_design -> cocotb_sim [dir=back, constraint=false];
+    verilog_design -> fpga_val [dir=back, constraint=false];
+    librelane_synth -> cocotb_gl_sim [dir=back, constraint=false];
+}

@@ -59,11 +59,12 @@ PDK obsahuje několik má částí, které umožňují návrh obvodů \cite{STG2
   \caption{Průřez vrstvami které je možné vytvořit procesem SKY130A \cite{skywater_metal_stack}.}\label{img:metal_stack}
 \end{figure}
 
-V tomto procesu je podkladový substrát typu P. V tomto substrátu je možné vytvářet struktury typu N a hloubkové N studny. Proces je optimalizován pro tvorbu unipolárních tranzistorů,
+V tomto procesu je podkladový substrát typu P. V tomto substrátu je možné vytvářet struktury typu N a hloubkové N struktury. Proces je optimalizován pro tvorbu unipolárních tranzistorů,
 ale umožňuje i bipolární tranzistory. Cesty se dají vést na 6 vrstvách kovu a Tiny Tapeout si nejvyšší vrstvu vyhrazuje pro rozvod napájení. Je možné vytvořit kondenzátory i rezistory.
 Vzhledem k fyzickým rozměrům lze vytvářet jen kondenzátory o maximální kapacitě desítek fF a to několika způsoby, v této práci se využívají dva, buď se vytvoří mosfet a propojí se source s drainem a využívá se jeho kapacita
 na gate, výhoda je relativně velká kapacita, ale za cenu nelinearity ($C=f(U)$), druhou možností je využít speciální vrstvy \textit{cap2m}, nebo \textit{capm}, které dovolí vytvořit kondenzátor mezi dvěma kovovými ploškami,
-tento způsob je vhodný pro přesné,malé a lineární kapacity. Absolutní hodnoty rezistorů se silně liší s každým výrobním během, proto je vhodnější využívat poměry odporů, namísto absolutních hodnot. Realizace cívek na chipu je 
+tento způsob je vhodný pro přesné,malé a lineární kapacity. Co se rezistorů týče, realizují se polykristalickým křemíkem a množstím N/P příměsí se nastavuje jeho vodivost,
+v procesu SKY130A jsou na výběr 3 úrovně dopování. Absolutní hodnoty rezistorů se silně liší s každým výrobním během, proto je vhodnější využívat poměry odporů, namísto absolutních hodnot. Realizace cívek na chipu je 
 prakticky téměř nevyužitelná \cite{skywater_sky130A,jku_analog,cmos_analog_design}.
 
 \section{Proces návrhu integrovaného obvodu}
@@ -77,6 +78,7 @@ v relativně velkém množství komplexních nástrojů vyvýjených malými tý
         \textbf{Nástroj} & \textbf{Popis} \\ \hline
         Verilog & HDL sloužící k popisu logických obvodů. \\ \hline
         Verilator & Logický simulátor pro verilog. \\ \hline
+        cocotb & Umožňuje psaní testů pro Verilog moduly v Pythonu. \\ \hline
         Intel Quartus & Vývojové prostředí pro FPGA Intel .\\ \hline
         Librelane & Syntetizátor Verilog kódu do fyzického obvodového zapojení ve formátu GDS. \\ \hline
         XSCHEM & Editor elektronických schémat. \\ \hline
@@ -90,98 +92,36 @@ v relativně velkém množství komplexních nástrojů vyvýjených malými tý
 
 Proces návrhu se liší pro digitální a analogovou část. Digitální část je založená na HDL Verilogu, který je automaticky syntetizován do podoby logických hradel ze standardní knihovny. Proces syntézy obstarává program LibreLane.
 U analogové části projektu bylo nutné vytvořit ručně schéma i layout nejen ze standardních komponent PDK, ale i vlastních součástek.
-Celý proces je znázorněn pracovním diagramem na Obrázek \ref{fig:design_diag}.
-
-\begin{figure}[H]
-\centering
-\resizebox{0.6\textwidth}{!}{%
-\begin{circuitikz}
-\tikzstyle{every node}=[font=\fontsize{11.9pt}{15.5pt}\selectfont]
-\draw  (11.125,11.125) rectangle (14,12.5);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (12.5625,11.8125) {XSCHEM};
-\draw  (11.125,12.875) rectangle (14,14.25);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (12.5625,13.5625) {NGSPICE};
-\draw  (11.125,14.625) rectangle (14,16);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (12.5625,15.3125) {Magic/Klayout};
-\draw  (11.125,16.375) rectangle (14,17.75);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (12.5625,17.0625) {Netgen};
-\draw  (11.125,18.125) rectangle (14,19.5);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (12.5625,18.8125) {Post layout \\ NGSPICE};
-\draw  (19.25,9.375) rectangle (22.125,10.75);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (20.6875,10.0625) {Verilog};
-\draw  (19.25,12.875) rectangle (22.125,14.25);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (20.6875,13.5625) {FPGA \\ verifikace};
-\draw  (19.25,14.625) rectangle (22.125,16);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (20.6875,15.3125) {LibreLane};
-\draw  (19.25,16.375) rectangle (22.125,17.75);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (20.6875,17.0625) {Gate level \\ Verilator};
-\draw  (19.25,18.125) rectangle (22.125,19.5);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (20.6875,18.8125) {GDS, LEF};
-\draw  (19.25,11.125) rectangle (22.125,12.5);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (20.6875,11.8125) {Verilator};
-\draw  (15.25,18.125) rectangle (18.125,19.5);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (16.6875,18.8125) {.def \\ template};
-\draw  (13.75,19.875) rectangle (19.375,22.75);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (16.5625,21.3125) {Vrcholová integrace v \\ XSCHEMU};
-\draw  (15.125,23.125) rectangle (18,24.5);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (16.5625,23.8125) {Magic/Klayout};
-\draw  (15.125,24.875) rectangle (18,26.25);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (16.5625,25.5625) {Netgen};
-\draw [-{Stealth[scale=1.5]}, ] (12.5,14.25) -- (12.5,14.625);
-\draw [-{Stealth[scale=1.5]}, ] (12.5,12.5) -- (12.5,12.875);
-\draw [-{Stealth[scale=1.5]}, ] (12.5,16) -- (12.5,16.375);
-\draw [-{Stealth[scale=1.5]}, ] (12.5,17.75) -- (12.5,18.125);
-\draw [-{Stealth[scale=1.5]}, ] (20.625,10.75) -- (20.625,11.125);
-\draw [-{Stealth[scale=1.5]}, ] (20.625,12.5) -- (20.625,12.875);
-\draw [-{Stealth[scale=1.5]}, ] (20.625,14.25) -- (20.625,14.625);
-\draw [-{Stealth[scale=1.5]}, ] (20.625,16) -- (20.625,16.375);
-\draw [-{Stealth[scale=1.5]}, ] (20.625,17.75) -- (20.625,18.125);
-\draw [short] (12.5,19.5) -- (12.5,20.875);
-\draw [short] (20.625,19.5) -- (20.625,20.875);
-\draw [-{Stealth[scale=1.5]}, ] (12.5,20.875) -- (13.75,20.875);
-\draw [-{Stealth[scale=1.5]}, ] (20.625,20.875) -- (19.375,20.875);
-\draw [-{Stealth[scale=1.5]}, ] (16.75,19.5) -- (16.75,19.875);
-\draw [-{Stealth[scale=1.5]}, ] (16.625,22.75) -- (16.625,23.125);
-\draw [-{Stealth[scale=1.5]}, ] (16.625,24.5) -- (16.625,24.875);
-\draw [short] (11,13.625) -- (9.5,13.625);
-\draw [short] (9.5,13.625) -- (9.5,11.625);
-\draw [short] (11.125,13.625) -- (10.875,13.625);
-\draw [-{Stealth[scale=1.5]}, ] (9.5,11.625) -- (11.125,11.625);
-\draw [short] (11.125,17.125) -- (9.5,17.125);
-\draw [short] (9.5,17.125) -- (9.5,15.5);
-\draw [-{Stealth[scale=1.5]}, ] (9.5,15.5) -- (11.125,15.5);
-\draw [short] (11.125,18.75) -- (8.625,18.75);
-\draw [short] (8.625,18.75) -- (8.625,11.375);
-\draw [-{Stealth[scale=1.5]}, ] (8.625,11.375) -- (11.125,11.375);
-\draw [short] (22.125,11.875) -- (23.5,11.875);
-\draw [short] (23.5,11.875) -- (23.5,10.25);
-\draw [-{Stealth[scale=1.5]}, ] (23.5,10.25) -- (22.125,10.25);
-\draw [short] (22.125,13.75) -- (23.875,13.75);
-\draw [short] (23.875,13.75) -- (23.875,10);
-\draw [-{Stealth[scale=1.5]}, ] (23.875,10) -- (22.125,10);
-\draw [short] (22.125,17.125) -- (24.25,17.125);
-\draw [short] (24.25,17.125) -- (24.25,9.75);
-\draw [-{Stealth[scale=1.5]}, ] (24.25,9.75) -- (22.125,9.75);
-\draw [short] (15.125,25.625) -- (14,25.625);
-\draw [short] (14,25.625) -- (14,23.75);
-\draw [-{Stealth[scale=1.5]}, ] (14,23.75) -- (15.125,23.75);
-\draw  (15.125,26.625) rectangle (18,28);
-\node[anchor=center, align=center, inner xsep=0.080cm, inner ysep=0.085cm, rounded corners=0.020cm, font=\fontsize{11.9pt}{15.5pt}\selectfont] at (16.5625,27.3125) {GDS, LEF};
-\draw [-{Stealth[scale=1.5]}, ] (16.625,26.25) -- (16.625,26.625);
-\end{circuitikz}
-}%
-\caption{Diagram procesu návrhu a verifikace integrovaného obvodu.}
-\label{fig:design_diag}
-\end{figure}
-
+\newpage
 \subsection{Analogové workflow}
-Základem vytváření analogových částí jsou programy XSCHEM, Magic, Klayout, NGSPICE a Netgen. V XSCHEMu se vytvoří schéma a na základě definovaných parametrů součástek se vygeneruje SPICE netlist celého schématu. Díky čemuž je možné vytvořit podrobnou simulaci a ověřit funkci obvodu z ideálních součástek.
-SPICE netlist se dá naimportovat do Magicu, který slouží k vytvoření layoutu. Generátor vytvoří fyzické součástky dle definovaných parametrů v netlistu. Je možné generátor nevyužít, ale znamenalo by to, že je nutné vytvořit každý tranzistor, rezistor i kondenzátor z elementárních materiálů jako je P substrát a N substrát.
-Během vytváření layoutu Magic kontroluje DRC živě a přepočítává je na mřížce 0.1 $\mu m$, což znamená že některé chyby se nemusí projevit a je nutné nechat design projít kontrolou DRC i v programu Klayout, který je přesnější. Pro zjištění zda-li layout odpovídá schématu je nutné využít nástroj Netgen,
-který porovnává SPICE netlist vygenerovaný programy XSCHEM a Magic. Po vytvoření fyzického zapojení je dobré vyextrahovat parazitní kapacity i sériové odpory a zvalidovat návrh stejným SPICE testem, kterým bylo testováno schématické zapojení.
-Vzhledem k tomu že layout je po jeho vytvoření neflexibilní. Je vhodné postupovat hierarchicky a modulárně, tzn. vytvořit menší blok zvalidovat ho a začlenit do vyššího celku.
+\begin{wrapfigure}{r}{0.55\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{img/analog_workflow.pdf}
+  \caption{Pracovní diagram pro návrh analogových bloků}\label{img:analog_workflow}
+\end{wrapfigure}
+Základem vytváření analogových částí jsou programy XSCHEM, Magic, Klayout, NGSPICE a Netgen. V XSCHEMu se vytvoří schéma a na základě definovaných parametrů součástek se vygeneruje SPICE netlist celého schématu. Tento netlist se dá využít v NGSPICE simulacích a testovacích scriptech, čímž se dá zvalidovat funkčnost navrhovaného bloku. Je však důležité si uvědomit, že neobahuje parazitní kapacity a odpory, znamená to tedy, že i když testem schéma projde, je možné že layout fungovat nebude.
+SPICE netlist ze schématu se dá naimportovat do Magicu, který slouží k vytvoření layoutu. Generátor vytvoří fyzické součástky dle schématu. Je možné generátor nevyužít, ale znamenalo by to, že je nutné vytvořit každý tranzistor, rezistor i kondenzátor z elementárních materiálů jako je P substrát, N substrát kovy etc.
+Během vytváření layoutu je důležité dodržovat DRC a je k tomu nutné kromě Magicu použít i druhý program Klayout, to z toho důvodu, že každý z programů přepočítává pravidla jinak. Magic umí zobrazit jednodušší DRC chyby živě v layoutu, Klayout má komplexní kontroly a spouští DRC přímo nad výrobními daty ve formátu \textit{GDS}. Pro to aby byl design přijmut do výroby nesmí mít v Klayoutu žádné DRC chyby. 
+Pro ověření, že layout odpovídá schématu je nutné využít nástroj Netgen, který porovnává SPICE netlist vygenerovaný programy XSCHEM a Magic.
+Po vytvoření fyzického zapojení je dobré vyextrahovat parazitní kapacity i sériové odpory a zvalidovat návrh stejným SPICE testem, kterým bylo testováno schématické zapojení.
+Vzhledem k tomu že layout je po jeho vytvoření v celku neflexibilní. Je vhodné postupovat hierarchicky a modulárně, tzn. vytvořit menší blok zvalidovat ho a začlenit do vyššího celku.
 
 \subsection{Digiální workflow}
+\begin{wrapfigure}{r}{0.45\textwidth}
+  \centering
+  \includegraphics[width=\linewidth]{img/digital_workflow.pdf}
+  \caption{Pracovní diagram pro návrh digitálních bloků}\label{img:digital_workflow}
+\end{wrapfigure}
+Digitální blok se skládá z Verilog modulů, čemuž odpovídá i pracovní postup návrhu. Jednotlivé verilog moduly jsou zvalidovány simulátorem Verilator a vrcholový modul byl zvalidován pomocí komplexního cocotb testu. Cocotb umožňuje psát testy pro Verilog moduly v Pythonu.
+Jako finální validace kódu je implementace logiky na FPGA. Pro syntézu verilog kódu na logické obvody vyrobitelné technologií SKY130A byl využit nástroj Librerlane. Ten ze standarních struktur vytvoří reálné zapojení,
+které nemá žádné DRC chyby a uložího do souboru ve formátu \textit{GDS}. Při syntéze nástrojem Librelane je nutné vytvořit dva konfigurační soubory, první z nich definuje rozmístění propojovacích pinů po obvodu vygenerovaného bloku a ten druhý
+definuje rozměry, hustotu rozmístění součástek, cílovou frekvenci hodin, způsoby rozmístění součástek etc.
+
+\subsection{Vrcholové propojení všech částí}
+Propojit anaogovou a digitální část lze několika způsoby, v případě tohoto projektu, bylo z digitální části vytvořené macro, dostala tedy svoji schématickou značku v xschemu a do layoutu se importoval přímo soubor GDS.
+Díky tomu je možné pracovat s digitálním blokem jako s kteroukoliv jinonu analogovou součástkou. Pro vrcholové propojení bylo nutné vytvořit schematickou značku šablony která je definovaná pouze souborem typu \textit{.def}.
+Pro vrcholový layout se do Magicu musí naimportovat všechny části, včetně šablony a propojit dle schématu. Pro kontrolu správnosti zapojení je vhodné opět porovnat SPICE netlisty schématu a layoutu v programu Netgen. 
+\newpage
 
 % CS HELP ===================================================== % 
 % V~následujícím textu je popsána metodika zpracování VŠKP. Hlavní text je vhodné rozčlenit následujícím způsobem.
