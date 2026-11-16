@@ -68,7 +68,7 @@ v procesu SKY130A jsou na výběr 3 úrovně dopování. Absolutní hodnoty rezi
 prakticky téměř nevyužitelná \cite{skywater_sky130A,jku_analog,cmos_analog_design}.
 
 \section{Proces návrhu integrovaného obvodu}
-Jedna z nevýhod využívání opensource nástrojů je jejich roztříštěnost. Neexistuje tedy jeden centrální program, ve kterém by se dalo udělat vše od verilogu po layout a floorplanning. Je tedy nutné se zorientovat 
+Jedna z nevýhod využívání opensource nástrojů je jejich roztříštěnost. Neexistuje tedy jeden centrální program, ve kterém by se dalo udělat vše od verilogu po layout a simulace. Je tedy nutné se zorientovat 
 v relativně velkém množství komplexních nástrojů vyvýjených malými týmy či jednotlivci. Souhrn a popis všech nástrojů v Tabulce \ref{tab:nastroje_ic_design}.
 \begin{table}[!ht]
     \centering
@@ -122,6 +122,102 @@ Propojit anaogovou a digitální část lze několika způsoby, v případě toh
 Díky tomu je možné pracovat s digitálním blokem jako s kteroukoliv jinonu analogovou součástkou. Pro vrcholové propojení bylo nutné vytvořit schematickou značku šablony která je definovaná pouze souborem typu \textit{.def}.
 Pro vrcholový layout se do Magicu musí naimportovat všechny části, včetně šablony a propojit dle schématu. Pro kontrolu správnosti zapojení je vhodné opět porovnat SPICE netlisty schématu a layoutu v programu Netgen. 
 s
+
+\chapter{Kryptografický akcelerátor}
+
+\begin{figure}[htbp]
+    \centering
+    \begin{tikzpicture}[scale=1, transform shape]
+        \draw[thick, rounded corners] (0,-1.5) rectangle (10.5,6.74);
+
+        \node[draw, minimum height=42.6791346pt, node font=\scriptsize, align=center, rounded corners, minimum width=45.5244099pt] (node3) at (3.87,1.25) {SPI interface \\ \texttt{spi\_slave.v} };
+
+        \node[draw, minimum height=156.4901566pt, node font=\scriptsize, align=center, rounded corners, minimum width=56.9055123pt] at (1.5,3.25) {Registry \\ \texttt{digital\_top.v} };
+
+        \node[draw, minimum height=42.6791346pt, node font=\scriptsize, align=center, rounded corners, minimum width=45.5244099pt] (node1) at (3.87,5.25) {Jádro šifry \\ \texttt{simon\_rounds.v} };
+        \node[draw, minimum height=42.6791346pt, node font=\scriptsize, align=center, rounded corners, minimum width=45.5244099pt] (node2) at (3.87,3.25) {Generátor \\Klíčů\\ \texttt{simon\_key.v} };
+        \draw (node3.west) -- (2.5,1.25);
+        \draw (node2.north) -- (node1.south);
+        \draw (node1.west) -- (2.5,5.25);
+        \draw (2.75,5.33) -- (2.6,5.17);
+        \draw (7.87,1.72) -- (7.72,1.56);
+        \draw (7.62,0.09) -- (7.47,-0.07);
+
+        \draw (3.94,4.33) -- (3.79,4.17);
+        \draw (2.85,1.33) -- (2.7,1.17);
+        \draw (3.9,-0.77) -- (3.75,-0.93);
+        \draw[thick, rounded corners, loosely dashed] (5.13,0.27) rectangle (0.24,6.23);
+        \node[node font=\scriptsize] at (1.16,6.39) {Digitální blok};
+
+        \node[node font=\scriptsize] at (1.63,6.89) {Kryptografický akcelerátor};
+        \draw[rounded corners, thick, loosely dashed] (5.5,0.27) rectangle (10,3);
+        \draw[rounded corners, thick, loosely dashed] (5.48,-1.28) rectangle (10,-0.17);
+
+        \node[node font=\scriptsize] at (6.83,3.11) {Nastavitelný oscilátor};
+        \node[node font=\scriptsize] at (6.26,0) {Měřící amux};
+
+        \node[draw, minimum height=58pt, node font=\scriptsize, align=center, rounded corners, minimum width=53pt] (node4) at (6.7,1.64) {3-bit DAC };
+
+        \node[draw, minimum height=58pt, node font=\scriptsize, align=center, rounded corners, minimum width=53pt] (node5) at (8.87,1.64) {Current\\starved\\ring oscillator  };
+        \draw (node4.east) -- (node5.west);
+
+        \node[draw, shape=trapezium, rotate=90] (node7) at (6.24,4.98) {MUX};
+        \draw (node7.north) -- (5.13,4.98);
+        \draw (node7.east) -- (6.24,6.74);
+        \draw (8.87,3) -- (8.87,4.5);
+        \draw (8.87,4.5) -- (6.48,4.5);
+        \draw (6.5,5.5) -- (8,5.5);
+        \draw (8,5.5) -- (8,6.74);
+        \draw[fill] (6.17,6.82) rectangle (6.32,6.66);
+        \draw[fill] (7.94,6.82) rectangle (8.09,6.66);
+        \draw[fill] (9.73,6.82) rectangle (9.88,6.66);
+
+        \node[draw, shape=trapezium, rotate=180] (node8) at (7.54,-0.55) {\rotatebox{180}{AMUX}};
+        \draw (node8.north) -- (7.54,-1.5);
+
+        \draw[fill] (7.47,-1.42) rectangle (7.62,-1.58);
+        \draw[fill] (5.7,-1.42) rectangle (5.85,-1.58);
+        \draw[fill] (3.75,-1.42) rectangle (3.9,-1.58);
+        \draw (node8.east) -- (5.77,-0.55);
+        \draw (5.77,-0.55) -- (5.77,-1.5);
+        \draw (7.55,0.27) -- (7.54,-0.17);
+
+        \draw (3.83,0.5) -- (3.83,-1.5);
+
+        \draw (9.8,3) -- (9.8,6.74);
+
+        \node[node font=\scriptsize] at (5.56,5.09) {CLK};
+
+        \node[minimum height=42.6791346pt, node font=\scriptsize, align=center, rounded corners, minimum width=45.5244099pt] (node6) at (3.8,-2) {MOSI,MISO, \\SCLK,CS };
+
+        \node[minimum height=42.6791346pt, node font=\scriptsize, align=center, rounded corners, minimum width=45.5244099pt] (node9) at (5.78,-2) {A,B,E };
+
+        \node[minimum height=42.6791346pt, node font=\scriptsize, align=center, rounded corners, minimum width=45.5244099pt] (node10) at (7.55,-2) {Y };
+
+        \draw (9.88,5) -- (9.73,4.84);
+
+        \node[node font=\scriptsize] at (6.25,7.1) {CLK\_select};
+
+        \node[node font=\scriptsize] at (8.05,7.1) {CLK\_ext};
+
+        \node[node font=\scriptsize] at (8.03,4.64) {CLK\_internal};
+
+        \node[node font=\scriptsize] at (9.81,7.1) {S[1],S[2],S[3]};
+    \end{tikzpicture}
+    \caption{Blokové schéma kryptografického akcelerátoru}
+    \label{fig:krypto_akcelerator}
+\end{figure}
+
+Základem celého integrovaného obvodu je implementace šifry SIMON definované americkou agenturou NSA \cite{beaulieu2013simon}. Dále je implementován SPI slave v módu 3, přičemž Verilog modul je založený na otevřeném IP jádře \cite{santhosh2014spi}. Celá digitální část samozřejmě potřebuje zdroj hodinového signálu.
+Ten je možné přivádět z externího zdroje anebo z integrovaného oscilátoru s konfigurovatelnou frekvencí. Zároveň je přítomný i analogový multiplexor sloužící k validaci a měření oscilátoru.
+
+\section{Šifra SIMON}
+Tento druh šifry je tak dobře optimalizovatelný a efektivní na prakticky všech platformách zejména z toho důvou, že využívá jen základní operace a to $\texttt{XOR}$, $\texttt{AND}$ a bitový posun $\texttt{S}^j$. Je to šifra založená na Feistalově mapě,
+což má z hlediska hardwareové implementace velkou výhodu. Je totiž možné pro zašifrování a odšifrování použít stejný mechanismus, do kterého se jen vkládají podklíče v opačném pořadí.
+\newline
+Pro realizaci je možný výběr z několika kombinací délky dat a délky klíče. Pro tento projekt bylo nejvhodnější datový blok o délce \texttt{32 bitů} a klíč o délce \texttt{64 bitů} a to proto, že výsledná implementace je ze všech variant fyzicky nejmenší. Pro tuto kombinaci je nutné aby blok slov prošel mapou 32x.
+Zároveň je možné šifru serializovat to znamená že by se datová slova nezpracovávala v jednom hodinovém cyklu celá, ale jen jejich menší části. Což by mělo celý návrh zmenšit, ale za neůměrně vyoký pokles rychlosti šifry, proto je ponechána zcela paralelní.  
+\newline
 
 % CS HELP ===================================================== % 
 % V~následujícím textu je popsána metodika zpracování VŠKP. Hlavní text je vhodné rozčlenit následujícím způsobem.
