@@ -76,17 +76,17 @@ v relativně velkém množství komplexních nástrojů vyvýjených malými tý
     \begin{tabular}{|l|l|}
     \hline
         \textbf{Nástroj} & \textbf{Popis} \\ \hline
-        Verilog & HDL sloužící k popisu logických obvodů. \\ \hline
-        Verilator & Logický simulátor pro verilog. \\ \hline
-        cocotb & Umožňuje psaní testů pro Verilog moduly v Pythonu. \\ \hline
-        Intel Quartus & Vývojové prostředí pro FPGA Intel .\\ \hline
-        Librelane & Syntetizátor Verilog kódu do fyzického obvodového zapojení ve formátu GDS. \\ \hline
-        XSCHEM & Editor elektronických schémat. \\ \hline
-        NGSPICE & Simulátor SPICE. \\ \hline
-        Magic & Layout editor pro integrované obvody. \\ \hline
-        Klayout & Alternativní layout editor pro integrované obvody. \\ \hline
-        Netgen & Porovnává zapojení layoutu a schématu. \\ \hline
-        SKY130A PDK & Soubor nástrojů a výrobních pravidel pro proces SKY130A. \\ \hline
+        Verilog & HDL sloužící k popisu logických obvodů~\cite{verilog_ieee}. \\ \hline
+        Verilator & Logický simulátor pro Verilog~\cite{verilator}. \\ \hline
+        cocotb & Umožňuje psaní testů pro Verilog moduly v Pythonu~\cite{cocotb}. \\ \hline
+        Intel Quartus & Vývojové prostředí pro FPGA Intel~\cite{intel_quartus}. \\ \hline
+        Librelane & Syntetizátor Verilog kódu do fyzického obvodového zapojení ve formátu GDS~\cite{librelane}. \\ \hline
+        XSCHEM & Editor elektronických schémat~\cite{xschem}. \\ \hline
+        NGSPICE & Simulátor SPICE~\cite{ngspice}. \\ \hline
+        Magic & Layout editor pro integrované obvody~\cite{magic_vlsi}. \\ \hline
+        Klayout & Alternativní layout editor pro integrované obvody~\cite{klayout}. \\ \hline
+        Netgen & Porovnává zapojení layoutu a schématu~\cite{netgen_lvs}. \\ \hline
+        SKY130A PDK & Soubor nástrojů a výrobních pravidel pro proces SKY130A~\cite{STG2020}. \\ \hline
     \end{tabular}
 \end{table}
 
@@ -115,12 +115,13 @@ Vzhledem k tomu že layout je po jeho vytvoření v celku neflexibilní. Je vhod
 Digitální blok se skládá z Verilog modulů, čemuž odpovídá i pracovní postup návrhu. Jednotlivé verilog moduly jsou zvalidovány simulátorem Verilator a vrcholový modul byl zvalidován pomocí komplexního cocotb testu. Cocotb umožňuje psát testy pro Verilog moduly v Pythonu.
 Jako finální validace kódu je implementace logiky na FPGA. Pro syntézu verilog kódu na logické obvody vyrobitelné technologií SKY130A byl využit nástroj Librerlane. Ten ze standarních struktur vytvoří reálné zapojení,
 které nemá žádné DRC chyby a uložího do souboru ve formátu \textit{GDS}. Při syntéze nástrojem Librelane je nutné vytvořit dva konfigurační soubory, první z nich definuje rozmístění propojovacích pinů po obvodu vygenerovaného bloku a ten druhý
-definuje rozměry, hustotu rozmístění součástek, cílovou frekvenci hodin, způsoby rozmístění součástek etc.
+definuje rozměry, hustotu rozmístění součástek, cílovou frekvenci hodin, způsoby rozmístění součástek etc. Je nutné v konfiguračním souboru definovat dostatečnou fyzickou velikost, jinak program nedokáže blok vytvořit.
 
 \subsection{Vrcholové propojení všech částí}
 Propojit anaogovou a digitální část lze několika způsoby, v případě tohoto projektu, bylo z digitální části vytvořené macro, dostala tedy svoji schématickou značku v xschemu a do layoutu se importoval přímo soubor GDS.
 Díky tomu je možné pracovat s digitálním blokem jako s kteroukoliv jinonu analogovou součástkou. Pro vrcholové propojení bylo nutné vytvořit schematickou značku šablony která je definovaná pouze souborem typu \textit{.def}.
 Pro vrcholový layout se do Magicu musí naimportovat všechny části, včetně šablony a propojit dle schématu. Pro kontrolu správnosti zapojení je vhodné opět porovnat SPICE netlisty schématu a layoutu v programu Netgen. 
+s
 
 \chapter{Kryptografický akcelerátor}
 
