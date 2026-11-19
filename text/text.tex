@@ -30,7 +30,7 @@ Oproti běžně používaným standardům jako je AES128, je realizace této ši
 i pro kooperacei s 8 a 16 bitovými kontrolery s extrémně nízkou spotřebou. Návrh, o kterém pojednává tato práce, má krom samotné šifry i sběrnici SPI a nastavitelný generátor interního hodinového signálu.
 
 %---------------------------------------------------------------
-\chapter{Workflow a využité nástroje}\label{chap:main}
+\chapter{Metody a využité nástroje}\label{chap:main}
 %---------------------------------------------------------------
 Většina nástrojů, které byly k realizaci projektu použity, jsou open-source. Jedinou výjimkou je IDE Intel Quartus, které bylo použito pro práci s FPGA. Využitím opensource nástrojů v kombinaci s projektem Tiny Tapeout \cite{Venn2024} bylo možné snížit výrobní cenu prototypu integrovaného obvodu z několika desítek až stovek tisíc USD na 550 USD.
 Tato radikální redukce ceny vyplývá zejména z vyhnutí se programům s komerční licencí. Další faktor pro redukci ceny byl výběr vhodné výrobní technologie. Nejedná se o zařízení, které by potřebovalo nejmodernější výrobní procesy. Dostačují 130 nm technologie IHPSG13G2, na které byl založený první prototyp a SKY130A, na které byl založený druhý prototyp. Důvodem pro změnu technologií byl rozdíl datumů, kdy se uzavírala výrobní okna.
@@ -93,7 +93,7 @@ v relativně velkém množství komplexních nástrojů vyvýjených malými tý
 Proces návrhu se liší pro digitální a analogovou část. Digitální část je založená na HDL Verilogu, který je automaticky syntetizován do podoby logických hradel ze standardní knihovny. Proces syntézy obstarává program LibreLane.
 U analogové části projektu bylo nutné vytvořit ručně schéma i layout nejen ze standardních komponent PDK, ale i vlastních součástek.
 \newpage
-\subsection{Analogové workflow}
+\subsection{Proces návrhu analogové části}
 \begin{wrapfigure}{r}{0.55\textwidth}
   \centering
   \includegraphics[width=\linewidth]{img/analog_workflow.pdf}
@@ -106,7 +106,7 @@ Pro ověření, že layout odpovídá schématu je nutné využít nástroj Netg
 Po vytvoření fyzického zapojení je dobré vyextrahovat parazitní kapacity i sériové odpory a zvalidovat návrh stejným SPICE testem, kterým bylo testováno schématické zapojení.
 Vzhledem k tomu že layout je po jeho vytvoření v celku neflexibilní. Je vhodné postupovat hierarchicky a modulárně, tzn. vytvořit menší blok zvalidovat ho a začlenit do vyššího celku.
 
-\subsection{Digiální workflow}
+\subsection{Proces návrhu digitální části}
 \begin{wrapfigure}{r}{0.45\textwidth}
   \centering
   \includegraphics[width=\linewidth]{img/digital_workflow.pdf}
@@ -209,15 +209,28 @@ s
 \end{figure}
 
 Základem celého integrovaného obvodu je implementace šifry SIMON definované americkou agenturou NSA \cite{beaulieu2013simon}. Dále je implementován SPI slave v módu 3, přičemž Verilog modul je založený na otevřeném IP jádře \cite{santhosh2014spi}. Celá digitální část samozřejmě potřebuje zdroj hodinového signálu.
-Ten je možné přivádět z externího zdroje anebo z integrovaného oscilátoru s konfigurovatelnou frekvencí. Zároveň je přítomný i analogový multiplexor sloužící k validaci a měření oscilátoru.
+Ten je možné přivádět z externího zdroje anebo z integrovaného oscilátoru s konfigurovatelnou frekvencí.
+Vzhledem k tomu že SPI používá hodinovou doménu, kterou nastavuje externí master \textit{SCLK} a zbytek systému využívá doménu  \textit{clk}, je nutné řešit přechod a synchronizaci mezi hodinovmi doménami. Protože vnitřní hodinová doména \textit{clk} má mnohonásobně vyšší frekvenci než standardní rychlosti SPI je možné externí SPI signály převzorkovat a prakticky tak využít stejnou doménu \textit{clk} i pro SPI rozhraní.
+Zároveň je přítomný i analogový multiplexor sloužící k validaci a měření oscilátoru.
 
 \section{Šifra SIMON}
-Tento druh šifry je tak dobře optimalizovatelný a efektivní na prakticky všech platformách zejména z toho důvou, že využívá jen základní operace a to $\texttt{XOR}$, $\texttt{AND}$ a bitový posun $\texttt{S}^j$. Je to šifra založená na Feistalově mapě,
+Tento druh šifry je tak dobře optimalizovatelný a efektivní na prakticky všech platformách zejména z toho důvou, že využívá jen základní operace a to $\texttt{XOR}$, $\texttt{AND}$ a bitový posun vlevo $\texttt{S}^j$. Je to šifra založená na Feistalově mapě,
 což má z hlediska hardwareové implementace velkou výhodu. Je totiž možné pro zašifrování a odšifrování použít stejný mechanismus, do kterého se jen vkládají podklíče v opačném pořadí.
 \newline
-Pro realizaci je možný výběr z několika kombinací délky dat a délky klíče. Pro tento projekt bylo nejvhodnější datový blok o délce \texttt{32 bitů} a klíč o délce \texttt{64 bitů} a to proto, že výsledná implementace je ze všech variant fyzicky nejmenší. Pro tuto kombinaci je nutné aby blok slov prošel mapou 32x.
-Zároveň je možné šifru serializovat to znamená že by se datová slova nezpracovávala v jednom hodinovém cyklu celá, ale jen jejich menší části. Což by mělo celý návrh zmenšit, ale za neůměrně vyoký pokles rychlosti šifry, proto je ponechána zcela paralelní.  
+Pro realizaci je možný výběr z několika kombinací délky dat a délky klíče. Pro tento projekt byl nejvhodnější datový blok o délce \texttt{32 bitů} a klíč o délce \texttt{64 bitů} a to proto, že výsledná implementace je ze všech variant fyzicky nejmenší. Pro tuto kombinaci je nutné aby blok slov prošel mapou 32x.
+Zároveň je možné šifru serializovat to znamená že by se datová slova nezpracovávala v jednom hodinovém cyklu celá, ale jen jejich menší části, což by mělo celý návrh zmenšit, ale za neůměrně vyoký pokles rychlosti šifry, proto je ponechána zcela paralelní.  
 \newline
+Pro jeden průhchod mapou se \texttt{32-bitový} blok dat rozdělí na dvě \texttt{16-bitová} slova, s označením $L_i$ a $R_i$, ta vstupují do Feistalovi mapy, ze které vystupují dvě nová slova $L_{i+1}$ a $R_{i+1}$ podle rovnic \ref{eq:faistelmap}, do mapy také vstupuje podklíč ${k_i}$ unikátní pro každý průběh\cite{beaulieu2013simon}.
+\begin{equation} \label{eq:faistelmap}
+    \begin{aligned}
+        L_{i+1} &= (((S^1(L_i)\&S^8(L_i))\oplus R_i)\oplus S^1(L_i))\oplus k_i\\\
+        R_{i+1} &= L_i
+    \end{aligned}
+\end{equation}
+
+Pro každý běh mapou je nutné mít specifický podklíč, pro 32 kol je nutné mít 32 podklíčů, nabízí se možnost všechny klíče předgenerovat a uložit do registrů. Tento přístup je ale velice
+prostorově neefektivní a proto je v registrech uložený jen 1 hlavní klíč ze kterého se každý takt hodin generuje nový poddružný klíč. Pro operaci dešifrovní se musí dogenerovat 32. podklíč a inverzními operacemi se za 32 taktů dostane zpátky k originálnímu klíči.
+
 
 % CS HELP ===================================================== % 
 % V~následujícím textu je popsána metodika zpracování VŠKP. Hlavní text je vhodné rozčlenit následujícím způsobem.
